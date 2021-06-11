@@ -6,7 +6,7 @@ import pandas as pd
 import geopandas as gpd
 
 app = Flask(__name__)
-@app.route('/dailyDosesCountry/<nameCountry>', methods=['GET'])
+@app.route('/daily=doses-country/<nameCountry>', methods=['GET'])
 def getDailyDosesCountry(nameCountry):
     df = pd.read_csv('data/us-daily-covid-vaccine-doses-administered.csv')
     df.drop(columns='Code', inplace=True)
@@ -19,7 +19,7 @@ def getDailyDosesCountry(nameCountry):
         return json.dumps(parsed, indent=4)
 
 
-@app.route('/totalDosesCountry/<nameCountry>', methods=['GET'])
+@app.route('/total-doses-country/<nameCountry>', methods=['GET'])
 def getTotalDosesCountry(nameCountry):
     df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
     df.drop(columns='Code', inplace=True)
@@ -43,7 +43,7 @@ def getVaccinePer100(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
-@app.route('/totalPeopleVaccinated/<nameCountry>', methods=['GET'])
+@app.route('/total-people-vaccinated/<nameCountry>', methods=['GET'])
 def getTotalPeopleVaccinated(nameCountry):
     df = pd.read_csv('data/us-covid-19-total-people-vaccinated.csv')
     df.drop(columns='Code', inplace=True)
@@ -55,7 +55,7 @@ def getTotalPeopleVaccinated(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
-@app.route('/shareFullyVaccinated/<nameCountry>', methods=['GET'])
+@app.route('/share-fully-vaccinated/<nameCountry>', methods=['GET'])
 def getShareFullyVaccinated(nameCountry):
     df = pd.read_csv('data/us-covid-share-fully-vaccinated.csv')
     df.drop(columns='Code', inplace=True)
@@ -67,7 +67,7 @@ def getShareFullyVaccinated(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
-@app.route('/shareVaccineDosesUsed/<nameCountry>', methods=['GET'])
+@app.route('/share-vaccine-doses-used/<nameCountry>', methods=['GET'])
 def getShareVaccineDosesUsed(nameCountry):
     df = pd.read_csv('data/us-share-covid-19-vaccine-doses-used.csv')
     df.drop(columns='Code', inplace=True)
@@ -79,7 +79,7 @@ def getShareVaccineDosesUsed(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
-@app.route('/vaccineStatePerDay/<date>', methods=['GET'])
+@app.route('/vaccine-state-per-day/<date>', methods=['GET'])
 def getVaccineStatePerDay(date):
     df = pd.read_csv('data/us-daily-covid-vaccine-doses-administered.csv')
     df.drop(columns='Code', inplace=True)
