@@ -85,13 +85,15 @@ def getVaccineStatePerDay(date):
     df.drop(columns='Code', inplace=True)
     df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
     df_perDay = df.loc[(df['Day'] == date)]
-    df_gd = gpd.read_file('https://docs.mapbox.com/mapbox-gl-js/assets/us_states.geojson')
-    df_join = df_gd.merge(df_perDay, how = "left", on = "STATE_NAME")
-    if df_join.empty:
+    if df_perDay.empty:
         return json.dumps({'data': "can't find date in " + str(date)})
     else:
+        df_gd = gpd.read_file('https://docs.mapbox.com/mapbox-gl-js/assets/us_states.geojson')
+        df_join = df_gd.merge(df_perDay, how = "left", on = "STATE_NAME")
         result = df_join.to_json()
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
+    
+    
 
 app.run()
