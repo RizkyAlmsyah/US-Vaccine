@@ -79,9 +79,9 @@ def getShareVaccineDosesUsed(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
-@app.route('/vaccine-state-per-day/<date>', methods=['GET'])
+@app.route('/vaccine-state-total-per-day/<date>', methods=['GET'])
 def getVaccineStatePerDay(date):
-    df = pd.read_csv('data/us-daily-covid-vaccine-doses-administered.csv')
+    df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
     df.drop(columns='Code', inplace=True)
     df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
     df_perDay = df.loc[(df['Day'] == date)]
