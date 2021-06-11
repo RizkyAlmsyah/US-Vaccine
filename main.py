@@ -3,6 +3,7 @@
 import json
 from flask import Flask
 import pandas as pd
+import geopandas as gpd
 
 app = Flask(__name__)
 @app.route('/dailyDosesCountry/<nameCountry>', methods=['GET'])
@@ -75,6 +76,21 @@ def getShareVaccineDosesUsed(nameCountry):
         return json.dumps({'data': "can't find state " + str(nameCountry)})
     else:
         result = df_share_vaccinate_doses.to_json(orient="index")
+        parsed = json.loads(result)
+        return json.dumps(parsed, indent=4)
+
+@app.route('/vaccineStatePerDay/<date>', methods=['GET'])
+def getVaccineStatePerDay(date):
+    df = pd.read_csv('data/us-daily-covid-vaccine-doses-administered.csv')
+    df.drop(columns='Code', inplace=True)
+    df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
+    df_perDay = df.loc[(df['Day'] == date)]
+    df_gd = gpd.read_file('https://docs.mapbox.com/mapbox-gl-js/assets/us_states.geojson')
+    df_join = df_gd.merge(df_perDay, how = "left", on = "STATE_NAME")
+    if df_join.empty:
+        return json.dumps({'data': "can't find date in " + str(date)})
+    else:
+        result = df_join.to_json()
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
