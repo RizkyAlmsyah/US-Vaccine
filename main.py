@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # encoding: utf-8
 import json
-from flask import Flask
+from flask import Flask, jsonify
 import pandas as pd
 import geopandas as gpd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+import datetime
 
 app = Flask(__name__)
 @app.route('/daily=doses-country/<nameCountry>', methods=['GET'])
@@ -95,5 +98,28 @@ def getVaccineStatePerDay(date):
         return json.dumps(parsed, indent=4)
     
     
-
+@app.route('/predict-vaccine-total-per-day/<country>/<date>', methods=['GET'])
+def getPredictVaccinePerDay(country,date):
+    df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
+    df.drop(columns='Code', inplace=True)
+    df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
+    df['Day'] = pd.to_datetime(df['Day'])
+    df_country = df.loc[(df['STATE_NAME']).str.lower() == str.lower(country)]
+    if df_country.empty:
+        return json.dumps({'data': "can't find country " + str(date)})
+    else:
+        #Machine Learning do the works 
+        df_country = df_country.set_index('Day')
+        X = (df_country.index -  df_country.index[0]).days.to_numpy()
+        Y = df_country.total_vaccinations.values
+        predict_day = (pd.Timestamp(date) - df_country.index[-1] ).days
+        s = 149 + predict_day
+        reg = LinearRegression().fit(X.reshape(-1,1), Y)
+        predict_total = reg.predict(np.array(s).reshape(-1,1))
+        a = int(predict_total[0])
+        return jsonify({'state': country,
+                        'date': date,
+                        'predict': a})
+        
+    
 app.run()
