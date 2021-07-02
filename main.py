@@ -91,8 +91,12 @@ def getVaccineStatePerDay(date):
     if df_perDay.empty:
         return json.dumps({'data': "can't find date in " + str(date)})
     else:
+        df_population = pd.read_csv('data/population.csv')
+        df_join_pop = df_perDay.merge(df_population, how = "left", on = "STATE_NAME")
+        df_join_pop['Percent'] = df_join_pop['total_vaccinations'] / df_join_pop['Pop'] * 100
+        #geo json
         df_gd = gpd.read_file('https://docs.mapbox.com/mapbox-gl-js/assets/us_states.geojson')
-        df_join = df_gd.merge(df_perDay, how = "left", on = "STATE_NAME")
+        df_join = df_gd.merge(df_join_pop, how = "left", on = "STATE_NAME")
         result = df_join.to_json()
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
@@ -117,9 +121,26 @@ def getPredictVaccineNextDate(country,date):
         reg = LinearRegression().fit(X.reshape(-1,1), Y)
         predict_total = reg.predict(np.array(s).reshape(-1,1))
         a = int(predict_total[0])
-        return jsonify({'state': country,
-                        'date': date,
-                        'predict': a})
+
+        #check population
+        df_population = pd.read_csv('data/population.csv')
+        country_pop = df_population.loc[df_population['STATE_NAME'].str.lower() == str.lower(country) ]
+        pop = country_pop.Pop.values
+        b = int(pop[0])
+        percent = round(a/b * 100)
+        if(a <= b):
+            return jsonify({'state': country,
+                            'date': date,
+                            'predict': a,
+                            'total population': b,
+                            'total vaccine': str(percent) + "%"})
+        else:
+            return jsonify({'state': country,
+                            'date': date,
+                            'predict': b,
+                            'total population': b,
+                            'total vaccine': str(100) + "%" })
+
         
 @app.route('/predict-vaccine-total-next-day/<country>/<days>', methods=['GET'])
 def getPredictVaccineNextDay(country,days):
@@ -139,10 +160,25 @@ def getPredictVaccineNextDay(country,days):
         reg = LinearRegression().fit(X.reshape(-1,1), Y)
         predict_total = reg.predict(np.array(s).reshape(-1,1))
         a = int(predict_total[0])
-        return jsonify({'state': country,
-                        'days': days,
-                        'predict': a})
 
+        #check population
+        df_population = pd.read_csv('data/population.csv')
+        country_pop = df_population.loc[df_population['STATE_NAME'].str.lower() == str.lower(country) ]
+        pop = country_pop.Pop.values
+        b = int(pop[0])
+        percent = round(a/b * 100)
+        if(a <= b):
+            return jsonify({'state': country,
+                            'days': days,
+                            'predict': a,
+                            'total population': b,
+                            'total vaccine': str(percent) + "%"})
+        else:
+            return jsonify({'state': country,
+                            'days': days,
+                            'predict': b,
+                            'total population': b,
+                            'total vaccine': str(100) + "%" })
 
 
 app.run()
