@@ -98,15 +98,15 @@ def getVaccineStatePerDay(date):
         return json.dumps(parsed, indent=4)
     
     
-@app.route('/predict-vaccine-total-per-day/<country>/<date>', methods=['GET'])
-def getPredictVaccinePerDay(country,date):
+@app.route('/predict-vaccine-total-next-date/<country>/<date>', methods=['GET'])
+def getPredictVaccineNextDate(country,date):
     df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
     df.drop(columns='Code', inplace=True)
     df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
     df['Day'] = pd.to_datetime(df['Day'])
     df_country = df.loc[(df['STATE_NAME']).str.lower() == str.lower(country)]
     if df_country.empty:
-        return json.dumps({'data': "can't find country " + str(date)})
+        return json.dumps({'data': "can't find country " + str(country)})
     else:
         #Machine Learning do the works 
         df_country = df_country.set_index('Day')
@@ -121,5 +121,28 @@ def getPredictVaccinePerDay(country,date):
                         'date': date,
                         'predict': a})
         
-    
+@app.route('/predict-vaccine-total-next-day/<country>/<days>', methods=['GET'])
+def getPredictVaccineNextDay(country,days):
+    df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
+    df.drop(columns='Code', inplace=True)
+    df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
+    df['Day'] = pd.to_datetime(df['Day'])
+    df_country = df.loc[(df['STATE_NAME']).str.lower() == str.lower(country)]
+    if df_country.empty:
+        return json.dumps({'data': "can't find country " + str(country)})
+    else:
+        #Machine Learning do the works 
+        df_country = df_country.set_index('Day')
+        X = (df_country.index -  df_country.index[0]).days.to_numpy()
+        Y = df_country.total_vaccinations.values
+        s = 149 + int(days)
+        reg = LinearRegression().fit(X.reshape(-1,1), Y)
+        predict_total = reg.predict(np.array(s).reshape(-1,1))
+        a = int(predict_total[0])
+        return jsonify({'state': country,
+                        'days': days,
+                        'predict': a})
+
+
+
 app.run()
