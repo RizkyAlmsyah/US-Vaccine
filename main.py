@@ -7,8 +7,13 @@ import geopandas as gpd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import datetime
+from flask_cors import CORS, cross_origin
+
 
 app = Flask(__name__)
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+
 @app.route('/daily=doses-country/<nameCountry>', methods=['GET'])
 def getDailyDosesCountry(nameCountry):
     df = pd.read_csv('data/us-daily-covid-vaccine-doses-administered.csv')
