@@ -7,6 +7,7 @@ import geopandas as gpd
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import datetime
+
 from flask_cors import CORS, cross_origin
 
 
@@ -101,6 +102,7 @@ def getVaccineStatePerDay(date):
         df_join_pop['Percent'] = df_join_pop['total_vaccinations'] / df_join_pop['Pop'] * 100
         #geo json
         df_gd = gpd.read_file('https://docs.mapbox.com/mapbox-gl-js/assets/us_states.geojson')
+        df_gd.loc[(df_gd['STATE_NAME']).str.lower() == str.lower('new york'), 'STATE_NAME'] = 'New York State'
         df_join = df_gd.merge(df_join_pop, how = "left", on = "STATE_NAME")
         result = df_join.to_json()
         parsed = json.loads(result)
