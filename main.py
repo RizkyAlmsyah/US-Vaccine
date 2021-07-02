@@ -15,7 +15,7 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-@app.route('/daily=doses-country/<nameCountry>', methods=['GET'])
+@app.route('/daily-doses-country/<nameCountry>', methods=['GET'])
 def getDailyDosesCountry(nameCountry):
     df = pd.read_csv('data/us-daily-covid-vaccine-doses-administered.csv')
     df.drop(columns='Code', inplace=True)
@@ -52,17 +52,6 @@ def getVaccinePer100(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
-@app.route('/total-people-vaccinated/<nameCountry>', methods=['GET'])
-def getTotalPeopleVaccinated(nameCountry):
-    df = pd.read_csv('data/us-covid-19-total-people-vaccinated.csv')
-    df.drop(columns='Code', inplace=True)
-    df_total_people_vaccinated = df.loc[(df['Entity']).str.lower() == str.lower(nameCountry)]
-    if df_total_people_vaccinated.empty:
-        return json.dumps({'data': "can't find state " + str(nameCountry)})
-    else:
-        result = df_total_people_vaccinated.to_json(orient="index")
-        parsed = json.loads(result)
-        return json.dumps(parsed, indent=4)
 
 @app.route('/share-fully-vaccinated/<nameCountry>', methods=['GET'])
 def getShareFullyVaccinated(nameCountry):
@@ -88,9 +77,9 @@ def getShareVaccineDosesUsed(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
-@app.route('/vaccine-state-total-per-day/<date>', methods=['GET'])
-def getVaccineStatePerDay(date):
-    df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
+@app.route('/total-people-vaccinated/<date>', methods=['GET'])
+def getTotalVaccinated(date):
+    df = pd.read_csv('data/us-covid-19-total-people-vaccinated.csv')
     df.drop(columns='Code', inplace=True)
     df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
     df_perDay = df.loc[(df['Day'] == date)]
@@ -99,7 +88,43 @@ def getVaccineStatePerDay(date):
     else:
         df_population = pd.read_csv('data/population.csv')
         df_join_pop = df_perDay.merge(df_population, how = "left", on = "STATE_NAME")
-        df_join_pop['Percent'] = df_join_pop['total_vaccinations'] / df_join_pop['Pop'] * 100
+        df_join_pop['Percent'] = df_join_pop['people_vaccinated'] / df_join_pop['Pop'] * 100
+        #geo json
+        df_gd = gpd.read_file('data/coordinates.geojson')
+        df_gd.loc[(df_gd['STATE_NAME']).str.lower() == str.lower('new york'), 'STATE_NAME'] = 'New York State'
+        df_join = df_gd.merge(df_join_pop, how = "left", on = "STATE_NAME")
+        result = df_join.to_json()
+        parsed = json.loads(result)
+        return json.dumps(parsed, indent=4)
+
+@app.route('/share-people-vaccinated/<date>', methods=['GET'])
+def getShareVaccinated(date):
+    df = pd.read_csv('data/us-covid-19-share-people-vaccinated.csv')
+    df.drop(columns='Code', inplace=True)
+    df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
+    df_perDay = df.loc[(df['Day'] == date)]
+    if df_perDay.empty:
+        return json.dumps({'data': "can't find date in " + str(date)})
+    else:
+        df_gd = gpd.read_file('data/coordinates.geojson')
+        df_join = df_gd.merge(df_perDay, how = "left", on = "STATE_NAME")
+        result = df_join.to_json()
+        parsed = json.loads(result)
+        return json.dumps(parsed, indent=4)
+
+
+@app.route('/total-people-fully-vaccinated/<date>', methods=['GET'])
+def getTotalFullyVaccinated(date):
+    df = pd.read_csv('data/us-covid-number-fully-vaccinated.csv')
+    df.drop(columns='Code', inplace=True)
+    df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
+    df_perDay = df.loc[(df['Day'] == date)]
+    if df_perDay.empty:
+        return json.dumps({'data': "can't find date in " + str(date)})
+    else:
+        df_population = pd.read_csv('data/population.csv')
+        df_join_pop = df_perDay.merge(df_population, how = "left", on = "STATE_NAME")
+        df_join_pop['Percent'] = df_join_pop['people_fully_vaccinated'] / df_join_pop['Pop'] * 100
         #geo json
         df_gd = gpd.read_file('data/coordinates.geojson')
         df_gd.loc[(df_gd['STATE_NAME']).str.lower() == str.lower('new york'), 'STATE_NAME'] = 'New York State'
@@ -108,7 +133,21 @@ def getVaccineStatePerDay(date):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
     
-    
+@app.route('/share-people-fully-vaccinated/<date>', methods=['GET'])
+def getSharePeopleFullyVaccinated(date):
+    df = pd.read_csv('data/us-covid-share-fully-vaccinated.csv')
+    df.drop(columns='Code', inplace=True)
+    df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
+    df_perDay = df.loc[(df['Day'] == date)]
+    if df_perDay.empty:
+        return json.dumps({'data': "can't find date in " + str(date)})
+    else:
+        df_gd = gpd.read_file('data/coordinates.geojson')
+        df_join = df_gd.merge(df_perDay, how = "left", on = "STATE_NAME")
+        result = df_join.to_json()
+        parsed = json.loads(result)
+        return json.dumps(parsed, indent=4)
+
 @app.route('/predict-vaccine-total-next-date/<country>/<date>', methods=['GET'])
 def getPredictVaccineNextDate(country,date):
     df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
