@@ -27,6 +27,50 @@ def getDailyDosesCountry(nameCountry):
         parsed = json.loads(result)
         return json.dumps(parsed, indent=4)
 
+@app.route('/total-people-vaccinated-in-state/<nameCountry>', methods=['GET'])
+def getTotalPeopleVaccinatedInState(nameCountry):
+    df = pd.read_csv('data/us-covid-19-total-people-vaccinated.csv')
+    df.drop(columns='Code', inplace=True)
+    df_total_people_vaccinated = df.loc[(df['Entity']).str.lower() == str.lower(nameCountry)]
+    if df_total_people_vaccinated.empty:
+        return json.dumps({'data': "can't find state " + str(nameCountry)})
+    else:
+        result = df_total_people_vaccinated.values.tolist()
+        return json.dumps(result, indent=4)
+
+@app.route('/share-people-vaccinated-in-state/<nameCountry>', methods=['GET'])
+def getSharePeopleVaccinatedInState(nameCountry):
+    df = pd.read_csv('data/us-covid-19-share-people-vaccinated.csv')
+    df.drop(columns='Code', inplace=True)
+    df_total_people_vaccinated = df.loc[(df['Entity']).str.lower() == str.lower(nameCountry)]
+    if df_total_people_vaccinated.empty:
+        return json.dumps({'data': "can't find state " + str(nameCountry)})
+    else:
+        result = df_total_people_vaccinated.values.tolist()
+        return json.dumps(result, indent=4)
+
+
+@app.route('/total-people-fully-vaccinated-in-state/<nameCountry>', methods=['GET'])
+def getTotalPeopleFullyVaccinatedInState(nameCountry):
+    df = pd.read_csv('data/us-covid-number-fully-vaccinated.csv')
+    df.drop(columns='Code', inplace=True)
+    df_total_people_vaccinated = df.loc[(df['Entity']).str.lower() == str.lower(nameCountry)]
+    if df_total_people_vaccinated.empty:
+        return json.dumps({'data': "can't find state " + str(nameCountry)})
+    else:
+        result = df_total_people_vaccinated.values.tolist()
+        return json.dumps(result, indent=4)
+
+@app.route('/share-people-fully-vaccinated-in-state/<nameCountry>', methods=['GET'])
+def getSharePeopleFullyVaccinatedInState(nameCountry):
+    df = pd.read_csv('data/us-covid-share-fully-vaccinated.csv')
+    df.drop(columns='Code', inplace=True)
+    df_total_people_vaccinated = df.loc[(df['Entity']).str.lower() == str.lower(nameCountry)]
+    if df_total_people_vaccinated.empty:
+        return json.dumps({'data': "can't find state " + str(nameCountry)})
+    else:
+        result = df_total_people_vaccinated.values.tolist()
+        return json.dumps(result, indent=4)
 
 @app.route('/total-doses-country/<nameCountry>', methods=['GET'])
 def getTotalDosesCountry(nameCountry):
@@ -150,7 +194,7 @@ def getSharePeopleFullyVaccinated(date):
 
 @app.route('/predict-vaccine-total-next-date/<country>/<date>', methods=['GET'])
 def getPredictVaccineNextDate(country,date):
-    df = pd.read_csv('data/us-total-covid-19-vaccine-doses-administered.csv')
+    df = pd.read_csv('data/us-covid-number-fully-vaccinated.csv')
     df.drop(columns='Code', inplace=True)
     df.rename(columns={'Entity': 'STATE_NAME'}, inplace=True)
     df['Day'] = pd.to_datetime(df['Day'])
@@ -161,7 +205,7 @@ def getPredictVaccineNextDate(country,date):
         #Machine Learning do the works 
         df_country = df_country.set_index('Day')
         X = (df_country.index -  df_country.index[0]).days.to_numpy()
-        Y = df_country.total_vaccinations.values
+        Y = df_country.people_fully_vaccinated.values
         predict_day = (pd.Timestamp(date) - df_country.index[-1] ).days
         s = len(X) + predict_day
         reg = LinearRegression().fit(X.reshape(-1,1), Y)
