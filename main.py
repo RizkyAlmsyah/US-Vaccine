@@ -202,7 +202,7 @@ def getPredictVaccineNextDay(country,days):
         df_country = df_country.set_index('Day')
         X = (df_country.index -  df_country.index[0]).days.to_numpy()
         Y = df_country.total_vaccinations.values
-        s = 149 + int(days)
+        s = len(X) + int(days)
         reg = LinearRegression().fit(X.reshape(-1,1), Y)
         predict_total = reg.predict(np.array(s).reshape(-1,1))
         a = int(predict_total[0])
